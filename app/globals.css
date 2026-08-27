@@ -1,0 +1,307 @@
+@import "tailwindcss";
+@plugin "tailwindcss-animate";
+@source "../node_modules/streamdown/dist/*.js";
+
+/* ============================================================
+ * NovelWeaver 织文 - 主题变量（浅色/深色）
+ * 冷色调高级感：深靛蓝-银灰基调（色相 250-255）
+ * 采用 shadcn/ui 的 CSS 变量规范
+ * ============================================================ */
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --color-sidebar-background: var(--sidebar-background);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+/* ── 浅色主题 ─────────────────────────────────────────── */
+
+:root {
+  /* 基础色 - 冷银灰底 + 深靛前景 */
+  --background: oklch(0.985 0.002 250);
+  --foreground: oklch(0.145 0.02 255);
+
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0.02 255);
+
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0.02 255);
+
+  /* 主色 - 绿色 (#00cc66) */
+  --primary: oklch(0.55 0.18 150);
+  --primary-foreground: oklch(0.98 0.005 150);
+
+  --secondary: oklch(0.93 0.01 255);
+  --secondary-foreground: oklch(0.20 0.025 260);
+
+  --muted: oklch(0.945 0.008 255);
+  --muted-foreground: oklch(0.50 0.015 260);
+
+  --accent: oklch(0.93 0.015 255);
+  --accent-foreground: oklch(0.20 0.025 260);
+
+  --destructive: oklch(0.55 0.2 25);
+  --destructive-foreground: oklch(0.98 0.005 25);
+
+  --border: oklch(0.89 0.008 255);
+  --input: oklch(0.89 0.008 255);
+  --ring: oklch(0.55 0.18 150);
+
+  /* 圆角 - 比之前略柔和 */
+  --radius: 0.675rem;
+
+  /* 侧边栏 */
+  --sidebar-background: oklch(0.97 0.005 255);
+  --sidebar-foreground: oklch(0.145 0.02 255);
+  --sidebar-primary: oklch(0.55 0.18 150);
+  --sidebar-primary-foreground: oklch(0.98 0.005 150);
+  --sidebar-accent: oklch(0.92 0.012 255);
+  --sidebar-accent-foreground: oklch(0.18 0.02 260);
+  --sidebar-border: oklch(0.89 0.008 255);
+  --sidebar-ring: oklch(0.42 0.14 260);
+}
+
+/* ── 深色主题 ─────────────────────────────────────────── */
+
+.dark {
+  --background: oklch(0.125 0.015 255);
+  --foreground: oklch(0.93 0.01 255);
+
+  --card: oklch(0.16 0.015 255);
+  --card-foreground: oklch(0.93 0.01 255);
+
+  --popover: oklch(0.16 0.015 255);
+  --popover-foreground: oklch(0.93 0.01 255);
+
+  /* 主色 - 绿色 (#00cc66) */
+  --primary: oklch(0.62 0.2 150);
+  --primary-foreground: oklch(0.12 0.015 255);
+
+  --secondary: oklch(0.22 0.015 255);
+  --secondary-foreground: oklch(0.90 0.01 255);
+
+  --muted: oklch(0.20 0.012 255);
+  --muted-foreground: oklch(0.58 0.015 260);
+
+  --accent: oklch(0.22 0.018 255);
+  --accent-foreground: oklch(0.90 0.01 255);
+
+  --destructive: oklch(0.55 0.2 25);
+  --destructive-foreground: oklch(0.98 0.005 25);
+
+  --border: oklch(0.26 0.015 255);
+  --input: oklch(0.26 0.015 255);
+  --ring: oklch(0.62 0.2 150);
+  --sidebar-background: oklch(0.10 0.012 255);
+  --sidebar-foreground: oklch(0.93 0.01 255);
+  --sidebar-primary: oklch(0.62 0.2 150);
+  --sidebar-primary-foreground: oklch(0.12 0.015 255);
+  --sidebar-accent: oklch(0.18 0.015 255);
+  --sidebar-accent-foreground: oklch(0.90 0.01 255);
+  --sidebar-border: oklch(0.22 0.012 255);
+  --sidebar-ring: oklch(0.65 0.16 260);
+}
+
+/* ============================================================
+ * 全局基础样式
+ * ============================================================ */
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  /* 标题自动平衡换行 */
+  h1, h2, h3, h4, h5, h6,
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  /* 段落防止孤行 */
+  p, li, td, th,
+  .text-pretty {
+    text-wrap: pretty;
+  }
+
+  /* 选中文本色 */
+  ::selection {
+    @apply bg-primary/15 text-primary;
+  }
+}
+
+/* ============================================================
+ * 滚动条美化 — 暗色终端风格
+ * ============================================================ */
+
+@layer base {
+  ::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--border);
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--muted-foreground);
+  }
+
+  /* Firefox */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+}
+
+/* ============================================================
+ * 动画关键帧
+ * ============================================================ */
+
+/* 光标闪烁（流式输出用） */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.animate-blink {
+  animation: blink 1s step-end infinite;
+}
+
+/* 流式输出光标 */
+.streamdown-cursor {
+  display: inline;
+  animation: blink 1s step-end infinite;
+  margin-left: 1px;
+}
+
+/* 淡入上移（页面入场） */
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-up {
+  animation: fade-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* 淡入缩放（卡片入场） */
+@keyframes fade-scale {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.animate-fade-scale {
+  animation: fade-scale 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* 脉搏（状态指示灯） */
+@keyframes pulse-soft {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.animate-pulse-soft {
+  animation: pulse-soft 2s ease-in-out infinite;
+}
+
+/* 滑动展开（面板用） */
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* ============================================================
+ * 工具类
+ * ============================================================ */
+
+@layer utilities {
+  .transition-smooth {
+    @apply transition-all duration-200 ease-out;
+  }
+
+  .transition-spring {
+    transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  /* 逐项延迟入场（用于 grid 子项） */
+  .stagger-1 { animation-delay: 0ms; }
+  .stagger-2 { animation-delay: 60ms; }
+  .stagger-3 { animation-delay: 120ms; }
+  .stagger-4 { animation-delay: 180ms; }
+  .stagger-5 { animation-delay: 240ms; }
+  .stagger-6 { animation-delay: 300ms; }
+  .stagger-7 { animation-delay: 360ms; }
+  .stagger-8 { animation-delay: 420ms; }
+}
+
+/* ============================================================
+ * prefers-reduced-motion — 尊重用户动画偏好
+ * ============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-pulse,
+  .animate-pulse-soft,
+  .animate-blink,
+  .streamdown-cursor {
+    animation: none !important;
+  }
+
+  .animate-fade-up,
+  .animate-fade-scale,
+  .animate-slide-up {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

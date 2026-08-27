@@ -1,0 +1,363 @@
+// prisma/schema.prisma
+// NovelWeaver 织文 数据库模型定义
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// ============================================================
+// 项目（Project）- 顶层实体，一个项目对应一部小说或一次跑团
+// ============================================================
+model Project {
+  id           String   @id @default(cuid())
+  name         String                          // 项目名称
+  type         String   @default("novel")      // "novel" | "trpg"
+  description  String   @default("")            // 项目简介
+  systemPrompt String   @default("")            // 项目级系统预设 Prompt
+  coverImage   String?                          // 封面图 URL/Base64（可选）
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // 关联
+  characters   Character[]
+  loreEntries  LoreEntry[]
+  memories     Memory[]
+  messages     Message[]
+  worldStates  WorldState[]
+  outlines     Outline[]
+  styleProfile StyleProfile?
+  errorArchives ErrorArchive[]
+  missions     Mission[]
+  chatGroups   ChatGroup[]
+  customAgents CustomAgent[]
+  agentGroups  AgentGroup[]
+  mcpservers   McpServer[]
+  skills       Skill[]
+}
+
+// ============================================================
+// 角色（Character）- 项目下的角色卡
+// ============================================================
+model Character {
+  id          String   @id @default(cuid())
+  projectId   String
+  name        String                              // 角色姓名
+  age         String   @default("")               // 年龄
+  appearance  String   @default("")               // 外貌描述
+  personality String   @default("")               // 性格描述
+  backstory   String   @default("")               // 背景故事
+  hiddenLore  String   @default("")               // 隐藏设定（仅 AI 可见，KP 模式）
+  persona     String   @default("")               // 角色专属 Prompt（语气、口癖）
+  avatarUrl   String?                             // 头像 URL
+  tags        String   @default("[]")             // JSON 数组：角色标签
+  status      String   @default("alive")           // 生存状态: alive/dead/missing/unknown
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // 关联
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  groupMemberships ChatGroupMember[]
+
+  @@index([projectId])
+}
+
+// ============================================================
+// 知识库词条（LoreEntry）- Wiki 式世界观管理
+// ============================================================
+model LoreEntry {
+  id        String   @id @default(cuid())
+  projectId String
+  title     String                              // 词条标题
+  content   String   @default("")               // 词条正文（Markdown）
+  keywords  String   @default("[]")             // JSON 数组：触发词列表
+  category  String   @default("general")        // 分类：geography/history/magic/character/event 等
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // 关联
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([category])
+}
+
+// ============================================================
+// 核心记忆（Memory）- AI 自动提取 + 手动管理
+// ============================================================
+model Memory {
+  id              String   @id @default(cuid())
+  projectId       String
+  content         String                         // 记忆内容（如："亚瑟折断了圣剑"）
+  sourceMessageId String?                        // 来源消息 ID（可选）
+  tags            String   @default("[]")        // JSON 数组：标签（如 ["战斗","亚瑟","圣剑"]）
+  importance      Int      @default(5)           // 重要性 1-10，用于排序
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // 关联
+  project         Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([importance])
+}
+
+// ============================================================
+// 对话消息（Message）- 聊天/续写历史 + 草稿/审核
+// ============================================================
+model Message {
+  id            String   @id @default(cuid())
+  projectId     String
+  role          String                              // "user" | "assistant" | "system"
+  content       String                              // 消息内容
+  isPinned      Boolean  @default(false)            // 是否被用户置顶（强制注入上下文）
+  isDraft       Boolean  @default(false)            // 是否为草稿（待审核）
+  reviewStatus  String   @default("none")           // "none" | "pending" | "approved" | "rejected"
+  reviewComment String   @default("")               // 审核意见/打回原因
+  metadata      String   @default("{}")             // JSON：额外元数据（token 数、模型等）
+  createdAt     DateTime @default(now())
+
+  // 关联
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([createdAt])
+  @@index([reviewStatus])
+}
+
+// ============================================================
+// 世界状态（WorldState）- 键值对式的动态世界变量
+// ============================================================
+model WorldState {
+  id          String   @id @default(cuid())
+  projectId   String
+  key         String                              // 状态键（如："主线进度"、"金币"）
+  value       String   @default("")               // 状态值
+  description String   @default("")               // 描述说明
+  updatedAt   DateTime @updatedAt
+
+  // 关联
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, key])                     // 同一项目下 key 唯一
+  @@index([projectId])
+}
+
+// ============================================================
+// 系统设置（Setting）- 全局配置持久化
+// ============================================================
+model Setting {
+  id    String @id @default("global")            // 单例，固定 ID
+  key   String @unique                           // 设置键
+  value String @default("")                      // 设置值（JSON 字符串）
+
+  @@index([key])
+}
+
+// ============================================================
+// 大纲（Outline）- 四级大纲系统
+// brainstorm → master_outline → arc_outline → chapter_outline
+// ============================================================
+model Outline {
+  id        String   @id @default(cuid())
+  projectId String
+  level     String                              // "brainstorm" | "master" | "arc" | "chapter"
+  title     String                              // 大纲标题
+  content   String   @default("")               // 大纲内容（Markdown）
+  order     Int      @default(0)                // 同层级排序
+  parentId  String?                             // 父大纲 ID（arc→chapter 层级关联）
+  status    String   @default("draft")          // "draft" | "active" | "completed" | "abandoned"
+  tags      String   @default("[]")             // JSON 数组：标签
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // 关联
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId, level])
+  @@index([parentId])
+}
+
+// ============================================================
+// 任务/档案（Mission）- 档案馆小说的核心文档单元
+// ============================================================
+model Mission {
+  id              String   @id @default(cuid())
+  projectId       String
+  title           String                              // 档案标题
+  code            String   @default("")               // 档案编号（如 TMS-L0234）
+  type            String   @default("mission")        // mission|report|interview|log|assessment|item|event
+  content         String   @default("")               // 档案正文（Markdown）
+  status          String   @default("draft")          // draft|review|archived|sealed
+  classification  String   @default("internal")       // internal|confidential|secret|cosmic
+  writerId        String?                             // 撰写人角色 ID
+  reviewerId      String?                             // 审核人角色 ID
+  reviewComment   String   @default("")
+  parentId        String?                             // 关联档案
+  tags            String   @default("[]")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  project         Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId, status])
+  @@unique([projectId, code])
+}
+
+// ============================================================
+// 聊天群组（ChatGroup）- 多角色群聊
+// ============================================================
+model ChatGroup {
+  id          String   @id @default(cuid())
+  projectId   String
+  name        String                              // 群组名称
+  avatar      String   @default("")               // 群头像
+  description String   @default("")               // 群描述
+  topic       String   @default("")               // 当前讨论主题
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  members     ChatGroupMember[]
+
+  @@index([projectId])
+}
+
+// ============================================================
+// 群组成员（ChatGroupMember）- 角色与群组的关联
+// ============================================================
+model ChatGroupMember {
+  id          String   @id @default(cuid())
+  groupId     String
+  characterId String                              // 角色 ID
+  role        String   @default("member")         // "leader" | "member" | "observer"
+  joinedAt    DateTime @default(now())
+
+  group       ChatGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  character   Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, characterId])
+  @@index([groupId])
+}
+
+// ============================================================
+// 技能定义（Skill）- 可复用的智能体能力定义
+// ============================================================
+model Skill {
+  id          String   @id @default(cuid())
+  projectId   String
+  name        String                              // 技能名称
+  description String   @default("")               // 技能描述
+  category    String   @default("general")         // general|writing|research|analysis|technical
+  prompt      String   @default("")               // 技能提示词（注入 System Prompt 用）
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@unique([projectId, name])
+}
+
+// ============================================================
+// 自定义智能体（CustomAgent）- 可配置的用户定义智能体
+// ============================================================
+model CustomAgent {
+  id          String   @id @default(cuid())
+  projectId   String
+  name        String                              // 智能体名称
+  type        String   @default("custom")          // planner|writer|reviewer|editor|custom
+  emoji       String   @default("🤖")              // 显示图标
+  systemPrompt String   @default("")               // 系统提示词
+  temperature Float    @default(0.7)               // 温度参数
+  skills      String   @default("[]")              // 技能列表 JSON: ["writing","research","analysis"]
+  mcpTools    String   @default("[]")              // MCP 工具列表 JSON: {"servers":["filesystem","web"],"tools":["read","write"]}
+  loreIds     String   @default("[]")              // 关联世界观词条 ID 列表
+  order       Int      @default(0)                 // 排序
+  isActive    Boolean  @default(true)              // 是否启用
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+}
+
+// ============================================================
+// 智能体协作分组（AgentGroup）- 将智能体组织为协作组
+// ============================================================
+model AgentGroup {
+  id          String   @id @default(cuid())
+  projectId   String
+  name        String                              // 分组名称
+  description String   @default("")               // 分组介绍/目标描述
+  memberIds   String   @default("[]")             // 成员智能体 ID 列表 JSON（支持内置 key 和 custom:id）
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+}
+
+// ============================================================
+// MCP 服务器注册（McpServer）- 智能体可调用的外部工具端点
+// ============================================================
+model McpServer {
+  id          String   @id @default(cuid())
+  projectId   String
+  name        String                              // 服务器名称
+  transport   String   @default("stdio")           // stdio | http | sse
+  command     String   @default("")               // stdio 模式：可执行文件路径
+  args        String   @default("[]")              // 启动参数 JSON
+  url         String   @default("")               // HTTP/SSE 模式：端点 URL
+  apiKey      String   @default("")               // API Key（可选）
+  tools       String   @default("[]")              // 提供的工具列表 JSON
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+}
+
+// ============================================================
+// 文风档案（StyleProfile）- 项目级文风约束
+// ============================================================
+model StyleProfile {
+  id          String   @id @default(cuid())
+  projectId   String   @unique
+  fingerprint String   @default("")               // 文风指纹：句式、词频、节奏等分析结果
+  constraints String   @default("")               // 文风约束：禁止/避免的写法
+  styleGuide  String   @default("")               // 风格指南：推荐句式、情感阈值等
+  sampleText  String   @default("")               // 参考文本样本
+  updatedAt   DateTime @updatedAt
+
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+// ============================================================
+// 错误沉淀（ErrorArchive）- 审核/纠错记录
+// ============================================================
+model ErrorArchive {
+  id          String   @id @default(cuid())
+  projectId   String
+  category    String   @default("other")          // "ooc" | "logic" | "style" | "fact" | "other"
+  content     String                              // 错误/问题描述
+  context     String   @default("")               // 上下文或引用原文
+  severity    String   @default("minor")          // "minor" | "major" | "critical"
+  resolved    Boolean  @default(false)            // 是否已解决
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([category])
+  @@index([resolved])
+}
